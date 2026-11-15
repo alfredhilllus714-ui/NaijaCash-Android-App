@@ -18,6 +18,10 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdSize;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.BufferedReader;
@@ -42,6 +46,7 @@ public class MainActivity extends Activity {
     private String selectedCategory = "All";
     private String searchText = "";
     private TextView countLabel;
+    private AdView bannerAd;
 
     private final String[] categories = {"All", "Electronics", "Fashion", "Home", "Phones", "Beauty", "Food", "Services", "Other"};
 
@@ -51,6 +56,7 @@ public class MainActivity extends Activity {
         getWindow().setNavigationBarColor(Color.rgb(255,255,255));
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
         buildScreen();
+        MobileAds.initialize(this, status -> runOnUiThread(this::loadBannerAd));
         loadListings();
     }
 
@@ -109,6 +115,22 @@ public class MainActivity extends Activity {
         }
         root.addView(nav);
         renderContent();
+    }
+
+    private void loadBannerAd() {
+        if (isFinishing() || bannerAd != null) return;
+        try {
+            bannerAd = new AdView(this);
+            bannerAd.setAdUnitId("ca-app-pub-3940256099942544/9214589741"); // Google test banner; replace with your live unit after testing.
+            int widthDp = (int) (getResources().getDisplayMetrics().widthPixels / getResources().getDisplayMetrics().density);
+            bannerAd.setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, widthDp));
+            LinearLayout root = (LinearLayout) ((ViewGroup) findViewById(android.R.id.content)).getChildAt(0);
+            int navIndex = root.getChildCount() - 1;
+            root.addView(bannerAd, navIndex, new LinearLayout.LayoutParams(-1, -2));
+            bannerAd.loadAd(new AdRequest.Builder().build());
+        } catch (Exception e) {
+            if (bannerAd != null) { bannerAd.destroy(); bannerAd = null; }
+        }
     }
 
     private void onNav(int index) {
@@ -257,5 +279,5 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this).setMessage("Close NaijaCash?").setPositiveButton("Exit",(d,w)->finish()).setNegativeButton("Stay",null).show();
     }
 
-    @Override protected void onDestroy() { super.onDestroy(); executor.shutdownNow(); }
+    @Override protected void onDestroy() { if (bannerAd != null) bannerAd.destroy(); super.onDestroy(); executor.shutdownNow(); }
 }
