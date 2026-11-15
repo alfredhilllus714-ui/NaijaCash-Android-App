@@ -675,3 +675,19 @@ footer {
     font-size: 33px;
   }
 }
+
+
+.shopping-shortcuts { max-width: 1180px; margin: 42px auto 0; padding: 0 24px; }
+.shortcut-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; }
+.shortcut-heading h2 { margin:0; color:#173c2a; font:800 25px Manrope,sans-serif; }
+.cart-count { display:inline-flex; align-items:center; gap:7px; color:#087f50; background:#e9f7ee; border-radius:30px; padding:9px 13px; font-weight:800; white-space:nowrap; }
+.shortcut-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.shortcut-grid button { text-align:left; border:1px solid #dcebe1; border-radius:14px; padding:18px; background:#fff; color:#1c4931; cursor:pointer; display:flex; flex-direction:column; gap:7px; }
+.shortcut-grid button strong { font:800 15px Manrope,sans-serif; }
+.shortcut-grid button span { color:#718078; font-size:12px; }
+.shopping-note { color:#77847c; font-size:11px; line-height:1.5; margin-top:12px; }
+.product-actions { display:grid; grid-template-columns:1fr auto; gap:8px; margin-top:8px; }
+.product-actions .outline-btn { width:auto; }
+.save-btn,.saved-btn { border:1px solid #dce8df; background:#fff; color:#24563a; border-radius:10px; padding:9px 12px; font-weight:700; cursor:pointer; white-space:nowrap; }
+.saved-btn { background:#fff0f1; border-color:#ffd3d8; color:#c33a50; }
+@media(max-width:760px) { .shopping-shortcuts { margin-top:28px; padding:0 18px; } .shortcut-grid { grid-template-columns:1fr; } .shortcut-heading h2 { font-size:20px; } }
