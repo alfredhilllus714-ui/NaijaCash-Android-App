@@ -21,6 +21,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.browser.customtabs.CustomTabsIntent;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
@@ -173,16 +174,27 @@ public class MainActivity extends Activity {
     private void onNav(int index) {
         if(index==0) { renderContent(); return; }
         if(index==1) new AlertDialog.Builder(this).setTitle("Start selling")
-            .setMessage("Secure account sign-in and native listing publishing are being connected. Your marketplace listings remain available to browse.")
+            .setMessage("Sign in securely with Google in a browser tab, then return to NaijaCash to continue. Seller publishing is still being connected.")
             .setPositiveButton("Open NaijaCash", (d,w)->openWebsite()).setNegativeButton("Cancel",null).show();
         else new AlertDialog.Builder(this).setTitle("NaijaCash account")
-            .setMessage("Sign in securely on the NaijaCash website. Native account connection is being completed.")
+            .setMessage("Continue with your Google account in a secure browser tab. When sign-in is complete, return to NaijaCash.")
             .setPositiveButton("Sign in", (d,w)->openWebsite()).setNegativeButton("Cancel",null).show();
     }
 
     private void openWebsite() {
-        try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(BASE))); }
-        catch(Exception e) { Toast.makeText(this,"Could not open sign-in page.",Toast.LENGTH_SHORT).show(); }
+        Uri signInUri = Uri.parse(BASE);
+        try {
+            CustomTabsIntent customTab = new CustomTabsIntent.Builder()
+                .setShowTitle(true)
+                .build();
+            customTab.launchUrl(this, signInUri);
+        } catch (Exception e) {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, signInUri));
+            } catch (Exception fallbackError) {
+                Toast.makeText(this, "Could not open sign-in page.", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void renderContent() {
