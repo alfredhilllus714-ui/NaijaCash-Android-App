@@ -130,7 +130,7 @@ public class MainActivity extends Activity {
         if (isFinishing() || bannerAd != null) return;
         try {
             bannerAd = new AdView(this);
-            bannerAd.setAdUnitId("ca-app-pub-3940256099942544/9214589741"); // Google test banner; replace with your live unit after testing.
+            bannerAd.setAdUnitId("ca-app-pub-5661872411693118/7393175677"); // NaijaCash live AdMob banner unit.
             int widthDp = (int) (getResources().getDisplayMetrics().widthPixels / getResources().getDisplayMetrics().density);
             bannerAd.setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, widthDp));
             LinearLayout root = (LinearLayout) ((ViewGroup) findViewById(android.R.id.content)).getChildAt(0);
