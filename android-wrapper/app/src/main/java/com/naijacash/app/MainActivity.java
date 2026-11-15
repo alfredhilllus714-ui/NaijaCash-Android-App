@@ -3,6 +3,7 @@ package com.naijacash.app;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -50,6 +51,7 @@ public class MainActivity extends Activity {
     private String searchText = "";
     private TextView countLabel;
     private AdView bannerAd;
+    private AdView contentBannerAd;
     private SharedPreferences shoppingPrefs;
     private final Set<String> wishlist = new HashSet<>();
     private final Set<String> cart = new HashSet<>();
@@ -58,6 +60,8 @@ public class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         getWindow().setStatusBarColor(Color.rgb(7, 75, 48));
         getWindow().setNavigationBarColor(Color.rgb(255,255,255));
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
@@ -126,20 +130,42 @@ public class MainActivity extends Activity {
         renderContent();
     }
 
+    private AdView createBanner(String unitId) {
+        AdView ad = new AdView(this);
+        ad.setAdUnitId(unitId);
+        int widthDp = (int) (getResources().getDisplayMetrics().widthPixels / getResources().getDisplayMetrics().density);
+        ad.setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, Math.max(320, widthDp)));
+        ad.loadAd(new AdRequest.Builder().build());
+        return ad;
+    }
+
     private void loadBannerAd() {
-        if (isFinishing() || bannerAd != null) return;
+        if (isFinishing()) return;
         try {
-            bannerAd = new AdView(this);
-            bannerAd.setAdUnitId("ca-app-pub-5661872411693118/7393175677"); // NaijaCash live AdMob banner unit.
-            int widthDp = (int) (getResources().getDisplayMetrics().widthPixels / getResources().getDisplayMetrics().density);
-            bannerAd.setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, widthDp));
             LinearLayout root = (LinearLayout) ((ViewGroup) findViewById(android.R.id.content)).getChildAt(0);
-            int navIndex = root.getChildCount() - 1;
-            root.addView(bannerAd, navIndex, new LinearLayout.LayoutParams(-1, -2));
-            bannerAd.loadAd(new AdRequest.Builder().build());
+            if (bannerAd == null) {
+                bannerAd = createBanner("ca-app-pub-5661872411693118/8164378048");
+                int navIndex = root.getChildCount() - 1;
+                root.addView(bannerAd, navIndex, new LinearLayout.LayoutParams(-1, -2));
+            }
+            if (contentBannerAd == null) {
+                contentBannerAd = createBanner("ca-app-pub-5661872411693118/7393175677");
+            }
+            attachContentBanner();
         } catch (Exception e) {
             if (bannerAd != null) { bannerAd.destroy(); bannerAd = null; }
+            if (contentBannerAd != null) { contentBannerAd.destroy(); contentBannerAd = null; }
         }
+    }
+
+    private void attachContentBanner() {
+        if (content == null || contentBannerAd == null) return;
+        ViewGroup parent = (ViewGroup) contentBannerAd.getParent();
+        if (parent != null) parent.removeView(contentBannerAd);
+        int insertAt = Math.min(2, content.getChildCount());
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.setMargins(0, dp(12), 0, dp(8));
+        content.addView(contentBannerAd, insertAt, params);
     }
 
     private void onNav(int index) {
@@ -160,7 +186,7 @@ public class MainActivity extends Activity {
     private void renderContent() {
         if(content==null) return;
         content.removeAllViews();
-        LinearLayout hero=vertical(); hero.setPadding(dp(20),dp(22),dp(20),dp(22));
+        LinearLayout hero=vertical(); hero.setPadding(dp(16),dp(18),dp(16),dp(18));
         hero.setBackground(shape(Color.rgb(7,75,48),20,0));
         TextView eyebrow=text("BUY  •  SELL  •  GROW",11,Color.rgb(183,237,204),true);
         hero.addView(eyebrow);
@@ -173,7 +199,8 @@ public class MainActivity extends Activity {
         TextView shopTitle=text("Shop smarter",18,Color.rgb(28,58,40),true); shopPanel.addView(shopTitle);
         TextView shopSummary=text("🛒 Cart: "+cart.size()+" items     ♡ Saved: "+wishlist.size(),13,Color.rgb(8,137,83),true); shopSummary.setPadding(0,dp(8),0,0); shopPanel.addView(shopSummary);
         TextView shopHint=text("Add products to your cart or save favourites for later.",12,Color.GRAY,false); shopHint.setPadding(0,dp(5),0,0); shopPanel.addView(shopHint);
-        LinearLayout.LayoutParams shopParams=new LinearLayout.LayoutParams(-1,-2); shopParams.setMargins(0,dp(14),0,0); content.addView(shopPanel,shopParams);
+        LinearLayout.LayoutParams shopParams=new LinearLayout.LayoutParams(-1,-2); shopParams.setMargins(0,dp(12),0,0); content.addView(shopPanel,shopParams);
+        attachContentBanner();
 
         searchBox=new EditText(this); searchBox.setSingleLine(true);
         searchBox.setTextSize(14); searchBox.setHint("Search products, services, location...");
@@ -304,5 +331,9 @@ public class MainActivity extends Activity {
         new AlertDialog.Builder(this).setMessage("Close NaijaCash?").setPositiveButton("Exit",(d,w)->finish()).setNegativeButton("Stay",null).show();
     }
 
-    @Override protected void onDestroy() { if (bannerAd != null) bannerAd.destroy(); super.onDestroy(); executor.shutdownNow(); }
+    @Override protected void onPause() { if (bannerAd != null) bannerAd.pause(); if (contentBannerAd != null) contentBannerAd.pause(); super.onPause(); }
+
+    @Override protected void onResume() { super.onResume(); if (bannerAd != null) bannerAd.resume(); if (contentBannerAd != null) contentBannerAd.resume(); }
+
+    @Override protected void onDestroy() { if (bannerAd != null) bannerAd.destroy(); if (contentBannerAd != null) contentBannerAd.destroy(); super.onDestroy(); executor.shutdownNow(); }
 }
