@@ -10,7 +10,9 @@ android {
         versionCode 1
         versionName '1.0'
     }
-    dependencies {
-        implementation 'com.google.android.gms:play-services-ads:25.5.0'
-    }
+}
+
+dependencies {
+    implementation 'com.google.android.gms:play-services-ads:25.5.0'
+    implementation 'androidx.browser:browser:1.8.0'
 }
