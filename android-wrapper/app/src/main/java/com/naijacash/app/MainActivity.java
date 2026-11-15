@@ -3,6 +3,7 @@ package com.naijacash.app;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -31,6 +32,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -47,6 +50,9 @@ public class MainActivity extends Activity {
     private String searchText = "";
     private TextView countLabel;
     private AdView bannerAd;
+    private SharedPreferences shoppingPrefs;
+    private final Set<String> wishlist = new HashSet<>();
+    private final Set<String> cart = new HashSet<>();
 
     private final String[] categories = {"All", "Electronics", "Fashion", "Home", "Phones", "Beauty", "Food", "Services", "Other"};
 
@@ -55,6 +61,9 @@ public class MainActivity extends Activity {
         getWindow().setStatusBarColor(Color.rgb(7, 75, 48));
         getWindow().setNavigationBarColor(Color.rgb(255,255,255));
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+        shoppingPrefs = getSharedPreferences("shopping", MODE_PRIVATE);
+        wishlist.addAll(shoppingPrefs.getStringSet("wishlist", new HashSet<>()));
+        cart.addAll(shoppingPrefs.getStringSet("cart", new HashSet<>()));
         buildScreen();
         MobileAds.initialize(this, status -> runOnUiThread(this::loadBannerAd));
         loadListings();
@@ -160,6 +169,12 @@ public class MainActivity extends Activity {
         TextView subtitle=text("Discover products and services across Nigeria.",14,Color.rgb(225,242,231),false);
         hero.addView(subtitle); content.addView(hero);
 
+        LinearLayout shopPanel=vertical(); shopPanel.setPadding(dp(14),dp(14),dp(14),dp(14)); shopPanel.setBackground(shape(Color.WHITE,16,Color.rgb(225,237,228)));
+        TextView shopTitle=text("Shop smarter",18,Color.rgb(28,58,40),true); shopPanel.addView(shopTitle);
+        TextView shopSummary=text("🛒 Cart: "+cart.size()+" items     ♡ Saved: "+wishlist.size(),13,Color.rgb(8,137,83),true); shopSummary.setPadding(0,dp(8),0,0); shopPanel.addView(shopSummary);
+        TextView shopHint=text("Add products to your cart or save favourites for later.",12,Color.GRAY,false); shopHint.setPadding(0,dp(5),0,0); shopPanel.addView(shopHint);
+        LinearLayout.LayoutParams shopParams=new LinearLayout.LayoutParams(-1,-2); shopParams.setMargins(0,dp(14),0,0); content.addView(shopPanel,shopParams);
+
         searchBox=new EditText(this); searchBox.setSingleLine(true);
         searchBox.setTextSize(14); searchBox.setHint("Search products, services, location...");
         searchBox.setPadding(dp(14),0,dp(14),0); searchBox.setBackground(shape(Color.WHITE,12,Color.rgb(225,235,227)));
@@ -243,6 +258,16 @@ public class MainActivity extends Activity {
             .setMessage(money(item.optDouble("price",0))+"\n\n"+item.optString("description")+"\n\nLocation: "+item.optString("location")+"\nSeller: "+item.optString("sellerName")+"\n\nContact the seller through the details they provide and verify before payment.")
             .setPositiveButton("OK",null).show());
         card.addView(details);
+        LinearLayout actions=new LinearLayout(this); actions.setGravity(Gravity.CENTER_VERTICAL); actions.setOrientation(LinearLayout.HORIZONTAL);
+        Button add=new Button(this); add.setText(cart.contains(item.optString("id"))?"In cart":"Add to cart"); add.setTextSize(11);
+        add.setOnClickListener(v->{String id=item.optString("id"); if(id.isEmpty()) id=item.optString("_id",item.optString("title")); cart.add(id); shoppingPrefs.edit().putStringSet("cart",new HashSet<>(cart)).apply(); add.setText("In cart"); Toast.makeText(this,"Added to cart",Toast.LENGTH_SHORT).show();});
+        actions.addView(add,new LinearLayout.LayoutParams(0,dp(46),1));
+        Button save=new Button(this); String productId=item.optString("id"); if(productId.isEmpty()) productId=item.optString("_id",item.optString("title"));
+        save.setText(wishlist.contains(productId)?"♥ Saved":"♡ Save"); save.setTextSize(11);
+        final String savedId=productId;
+        save.setOnClickListener(v->{if(wishlist.contains(savedId)){wishlist.remove(savedId);save.setText("♡ Save");}else{wishlist.add(savedId);save.setText("♥ Saved");}shoppingPrefs.edit().putStringSet("wishlist",new HashSet<>(wishlist)).apply();Toast.makeText(this,"Wishlist updated",Toast.LENGTH_SHORT).show();});
+        actions.addView(save,new LinearLayout.LayoutParams(0,dp(46),1));
+        card.addView(actions);
         card.setLayoutParams(cp); return card;
     }
 
