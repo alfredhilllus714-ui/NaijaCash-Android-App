@@ -10,6 +10,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Build;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -61,6 +62,7 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        if (Build.VERSION.SDK_INT >= 30) getWindow().setDecorFitsSystemWindows(true);
         getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         getWindow().setStatusBarColor(Color.rgb(7, 75, 48));
         getWindow().setNavigationBarColor(Color.rgb(255,255,255));
@@ -130,11 +132,11 @@ public class MainActivity extends Activity {
         renderContent();
     }
 
-    private AdView createBanner(String unitId) {
+    private AdView createBanner(String unitId, int horizontalInsetDp) {
         AdView ad = new AdView(this);
         ad.setAdUnitId(unitId);
         int widthDp = (int) (getResources().getDisplayMetrics().widthPixels / getResources().getDisplayMetrics().density);
-        ad.setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, Math.max(320, widthDp)));
+        ad.setAdSize(AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, Math.max(280, widthDp - horizontalInsetDp)));
         ad.loadAd(new AdRequest.Builder().build());
         return ad;
     }
@@ -144,12 +146,12 @@ public class MainActivity extends Activity {
         try {
             LinearLayout root = (LinearLayout) ((ViewGroup) findViewById(android.R.id.content)).getChildAt(0);
             if (bannerAd == null) {
-                bannerAd = createBanner("ca-app-pub-5661872411693118/8164378048");
+                bannerAd = createBanner("ca-app-pub-5661872411693118/8164378048", 0);
                 int navIndex = root.getChildCount() - 1;
                 root.addView(bannerAd, navIndex, new LinearLayout.LayoutParams(-1, -2));
             }
             if (contentBannerAd == null) {
-                contentBannerAd = createBanner("ca-app-pub-5661872411693118/7393175677");
+                contentBannerAd = createBanner("ca-app-pub-5661872411693118/7393175677", 32);
             }
             attachContentBanner();
         } catch (Exception e) {
