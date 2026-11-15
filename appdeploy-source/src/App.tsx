@@ -98,6 +98,23 @@ export default function App() {
   const [aiInput, setAiInput] = useState('');
   const [aiOutput, setAiOutput] = useState('');
   const [aiBusy, setAiBusy] = useState(false);
+  const [cart, setCart] = useState<Record<string, number>>(() => {
+    try { return JSON.parse(localStorage.getItem('naijacash-cart') || '{}'); } catch { return {}; }
+  });
+  const [wishlist, setWishlist] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('naijacash-wishlist') || '[]'); } catch { return []; }
+  });
+  useEffect(() => { localStorage.setItem('naijacash-cart', JSON.stringify(cart)); }, [cart]);
+  useEffect(() => { localStorage.setItem('naijacash-wishlist', JSON.stringify(wishlist)); }, [wishlist]);
+  const cartCount = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+  function addToCart(id: string) {
+    setCart(current => ({ ...current, [id]: (current[id] || 0) + 1 }));
+    setNotice('Added to your shopping cart.');
+  }
+  function toggleWishlist(id: string) {
+    setWishlist(current => current.includes(id) ? current.filter(x => x !== id) : [...current, id]);
+  }
+
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -336,6 +353,15 @@ export default function App() {
             {aiOutput && aiMode === 'buyer' && <div className="ai-answer">{aiOutput}</div>}
           </div>
         </section>
+        <section className="shopping-shortcuts">
+          <div className="shortcut-heading"><div><div className="eyebrow dark">SHOPPING YOUR WAY</div><h2>Deals, saved items & your cart</h2></div><span className="cart-count"><ShoppingBag size={16}/> {cartCount} items</span></div>
+          <div className="shortcut-grid">
+            <button onClick={() => { setView('market'); setCategory('All'); setSearch(''); }}><strong>⚡ Today's discoveries</strong><span>Explore popular marketplace finds</span></button>
+            <button onClick={() => setNotice(wishlist.length ? 'Your saved items: ' + wishlist.length + '. Tap the heart on a product to manage them.' : 'Your wishlist is empty. Save products with the heart button.') }><strong>♡ Wishlist ({wishlist.length})</strong><span>Keep products you want to revisit</span></button>
+            <button onClick={() => setNotice(cartCount ? 'Your cart has ' + cartCount + ' item(s). Checkout will be enabled after secure payment setup.' : 'Your shopping cart is empty. Add products to get started.') }><strong>🛒 Shopping cart ({cartCount})</strong><span>Collect products before checkout</span></button>
+          </div>
+          <p className="shopping-note">Flash-sale prices, seller ratings, delivery tracking and secure checkout will appear when verified seller and payment services are connected.</p>
+        </section>
         <section id="market" className="market-section">
           <div className="section-head">
             <div>
@@ -418,6 +444,10 @@ export default function App() {
                     >
                       View seller details
                     </button>
+                    <div className="product-actions">
+                      <button className="outline-btn" onClick={() => addToCart(item.id)}>＋ Add to cart</button>
+                      <button className={wishlist.includes(item.id) ? 'saved-btn' : 'save-btn'} aria-label="Save to wishlist" onClick={() => toggleWishlist(item.id)}>{wishlist.includes(item.id) ? '♥ Saved' : '♡ Save'}</button>
+                    </div>
                     {user?.userId === item.sellerId && (
                       <button
                         className="feature-btn"
